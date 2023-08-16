@@ -9,26 +9,40 @@ FONT_NAME = "Courier"
 WORK_MIN = 1
 SHORT_BREAK_MIN = 1
 LONG_BREAK_MIN = 2
-reps = 1
+reps = 0
+timer = None
 
 # ---------------------------- TIMER RESET ------------------------------- # 
+def reset_timer():
+    # Reset the timer
+    window.after_cancel(timer)
+    # timer_text 00:00
+    canvas.itemconfig(timer_text, text=f"00:00")
+    # title_label "Timer"
+    timer_label.config(text="Timer")
+    # reset checkboxes
+    checkbox_label.config(text="")
+    # Reset the number of preps to 0
+    global reps
+    preps = 0
 
 # ---------------------------- TIMER MECHANISM ------------------------------- # 
 def start_timer():
     global reps
+    reps += 1
     work_sec = WORK_MIN * 60
     short_break_sec = SHORT_BREAK_MIN * 60
     long_break_sec = LONG_BREAK_MIN  * 60
-    while reps <= 8:
-        if reps % 8 == 0:
-            countdown(long_break_sec)
-            reps += 1
-        elif reps % 2 == 0:
-            countdown(short_break_sec)
-            reps += 1
-        else:
-            countdown(work_sec)
-            reps += 1
+    if reps % 8 == 0:
+        countdown(long_break_sec)
+        timer_label.config(text="Break", fg=RED)
+    elif reps % 2 == 0:
+        countdown(short_break_sec)
+        timer_label.config(text="Break", fg=PINK)
+    else:
+        countdown(work_sec)
+        timer_label.config(text="Work", fg=GREEN)
+
 
 # ---------------------------- COUNTDOWN MECHANISM ------------------------------- # 
 def countdown(count):
@@ -38,10 +52,18 @@ def countdown(count):
         count_second = f"0{count_second}"
     canvas.itemconfig(timer_text, text=f"{count_min}:{count_second}")
     if count > 0:
-        window.after(1000, countdown, count - 1)
+        global timer
+        timer = window.after(1000, countdown, count - 1)
+    else:
+        start_timer()
+        mark = ""
+        work_session = math.floor(reps / 2)
+        for _ in range(work_session):
+            mark += "✔"
+        checkbox_label.config(text=mark)
 
 
-# ---------------------------- UI SETUP ------------------------------- #
+        # ---------------------------- UI SETUP ------------------------------- #
 window = Tk()
 window.title("Pomodoro")
 window.config(padx=100, pady=50, bg=YELLOW)
@@ -63,7 +85,7 @@ timer_label = Label(text="Timer", bg=YELLOW, fg=GREEN, font=(FONT_NAME, 35, "bol
 timer_label.grid(column=1, row=0)
 
 # Checkbox Label
-checkbox_label = Label(text="✔", bg=YELLOW, fg=GREEN, font=(FONT_NAME, 10, "bold"))
+checkbox_label = Label(bg=YELLOW, fg=GREEN, font=(FONT_NAME, 10, "bold"))
 checkbox_label.grid(column=1, row=3)
 
 
@@ -73,7 +95,7 @@ start_button.grid(column=0, row=2)
 
 
 # Reset button
-reset_button = Button(text='Reset')
+reset_button = Button(text='Reset', command=reset_timer)
 reset_button.grid(column=2, row=2)
 
 
